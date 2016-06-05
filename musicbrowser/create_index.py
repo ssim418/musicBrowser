@@ -1,4 +1,5 @@
 import os
+import json
 
 picard_dir = r'E:\picard-mp3_only'
 
@@ -28,6 +29,7 @@ def parse_album_files(album_folder):
 def create():
     ignored = 0
     total_albums = 0
+    index = {}
     for artist in os.listdir(picard_dir):
         print('processing ' + artist)
         artist_path = os.path.join(picard_dir, artist)
@@ -44,6 +46,12 @@ def create():
                     except ValueError:
                         ignored += 1
                         print('ignoring ' + album_path)
+            if len(albums) > 0:
+                index[artist] = albums
+    with open('index.json', 'w', encoding='utf-8') as f:
+        json.dump(index, f)
+        print('saved index to %s' % os.path.abspath('index.json'))
+
     print('ignored {} of {} albums ({:.2%})'.format(ignored, total_albums, ignored/total_albums))
     # for root, dirs, files in os.walk(picard_dir, topdown=False):
     #     for name in files:

@@ -14,6 +14,8 @@ import time
 
 import socket
 
+index = {}
+
 try:
     import asyncio
 except ImportError:
@@ -39,10 +41,6 @@ default_port = 5743
 new_tab_data = list()
 
 
-
-
-
-
 class MyError(Exception):
     def __init__(self, value):
         self.value = value
@@ -64,24 +62,20 @@ def order_websocket_dict(json_str):
     return json.dumps(ordered)
 
 
-def file_dragged_handler(data):
-    filename = data['filename']
-    logger.debug('locating ' + filename)
-    for file in os.listdir(video_dir):
-        if file == filename:
-            video_file = os.path.join(video_dir, file)
-            logger.info('located: ' + video_file)
-            return {'command': 'set_video_path', 'video_path': video_file}
-    logger.info('could not locate file: ' + filename)
-    return {'command': 'alert', 'message': 'video file not found'}
+def create_root_navigation():
+    nav_html = ''
+    for artist in index:
+        nav_html += '<a onclick="navToArtist(\'artist\'); return false;">{}</a><br>'.format(artist)
+    # return nav_html
+    return '<span>asdf</span>'
 
 
-def to_timestamp(int_timestamp):
-    try:
-        return datetime.strptime(str(int_timestamp).zfill(6), '%H%M%S').time().strftime('%H:%M:%S')
-    except ValueError:
-        raise ValueError('Invalid timestamp: %s. Timestamp must be of form: '
-                         'S or SS or MSS or MMSS or HMMSS or HHMMSS.' % int_timestamp)
+def handle_navigation(payload):
+    address = payload['address']
+    if address == 'root':
+        return {'command': 'display_new_nav_content',
+                'content': create_root_navigation()}
+
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -118,6 +112,9 @@ class MyServerProtocol(WebSocketServerProtocol):
                 self.factory.register_controller(self)
             elif event == 'play_pause':
                 self.factory.send_to_player({'command': 'play_pause'})
+            elif event == 'navigate':
+                self.VtSendMessage(handle_navigation(data))
+
                 # to_client = data
                 # to_client['command'] = 'play'
                 # to_client['file_path'] = 'file:///' + data['file_path']
@@ -220,5 +217,12 @@ if __name__ == '__main__':
 
     # logger.addHandler(defaultFileHandler)
     logger.addHandler(consoleHandler)
+
+    if not os.path.isfile('index.json'):
+        raise ValueError('index.json not found')
+    with open('index.json', 'r', encoding='utf-8') as f:
+        logger.info('loading index data...')
+        index = json.load(f)
+        logger.info('index data loaded successfully')
 
     start()
