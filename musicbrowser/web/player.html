@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>player</title>
+</head>
+<body>
+
+<audio id="audio" preload="auto" tabindex="0" controls="" type="audio/mpeg" style="width: 100%;">
+    <!--<source type="audio/mp3" src="">-->
+</audio>
+<div id="connection_status"></div>
+<script>
+var uninitialized = true;
+var audio = document.getElementById('audio');
+var next_file;
+
+// websocket stuff
+            var ws = new WebSocket("ws://127.0.0.1:5743/");
+
+            ws.onmessage = function (event) {
+                console.log('received from server: ' + event.data);
+                var data = JSON.parse(event.data);
+                if (data['command'] == 'initial_play') {
+                    console.log('trying to play');
+                    audio.src = data['file_path'];
+                    audio.type = "audio/mpeg";
+                    console.log('audio src: ' + audio.src);
+                    audio.load();
+                    audio.play();
+                } else if (data['command'] == 'set_next_file') {
+                    next_file = data['file_path'];
+                } else if (data['command'] == 'play_pause') {
+                    if (audio.paused) {
+                        audio.play();
+                    } else {
+                        audio.pause();
+                    }
+                } else {
+                    alert('error: unrecognised command');
+                }
+            };
+            ws.onopen = function(e) {
+                ws.send(JSON.stringify({'event': 'register_as_player'}));
+            };
+            ws.onclose = function(e) {
+               document.getElementById('connection_status').innerHTML = '<span style="background-color: #FF3333;">not connected to backend</span>';
+            };
+// track finished callback
+            audio.addEventListener('ended',function(e){
+                if (!!next_file) {
+                    ws.send(JSON.stringify({'event': 'finished_playing_track', 'finished_track': audio.src, 'new_track': next_file}));
+                    audio.src = next_file;
+                    audio.type = "audio/mpeg";
+                    audio.load();
+                    audio.play();
+                } else {
+                    ws.send(JSON.stringify({'event': 'need_new_tracks'}));
+                }
+            });
+</script>
+</body>
+</html>

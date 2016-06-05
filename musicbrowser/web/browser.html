@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>browser</title>
+</head>
+<body>
+
+<div id="currently_playing"></div>
+<!--<div id="next_up"></div>-->
+<input type="submit" value="Play/Pause" onclick="ws.send(JSON.stringify({'event': 'play_pause'}));">
+<input type="submit" value="Skip to next Track" onclick="ws.send(JSON.stringify({'event': 'skip'}));">
+<!--<input type="submit" value="Change Next Track" onclick="ws.send(JSON.stringify({'event': 'change_next_track'}));">-->
+<div id="main_cover"></div>
+<!--<div id="next_cover"></div>-->
+
+<script>
+var currently_playing = document.getElementById('currently_playing');
+var main_cover = document.getElementById('main_cover');
+// websocket stuff
+            var ws = new WebSocket("ws://127.0.0.1:5743/");
+
+            ws.onmessage = function (event) {
+                console.log('received from server: ' + event.data);
+                var data = JSON.parse(event.data);
+                if (data['command'] == 'play') {
+                    audio.src = data['file_path'];
+                    audio.load();
+                    audio.play();
+                }
+            };
+            ws.onopen = function(e) {
+                ws.send(JSON.stringify({'event': 'register_as_controller'}));
+                ws.send(JSON.stringify({'event': 'play', 'file_path': "3333333"}));
+            };
+            ws.onclose = function(e) {
+               // document.getElementById('connection_status').innerHTML = '<span style="background-color: #FF3333;">not connected to backend</span>';
+            };
+</script>
+</body>
+</html>
