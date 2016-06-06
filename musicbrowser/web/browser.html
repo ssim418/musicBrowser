@@ -11,12 +11,12 @@
 <input type="submit" value="Play/Pause" onclick="ws.send(JSON.stringify({'event': 'play_pause'}));">
 <input type="submit" value="Skip to next Track" onclick="ws.send(JSON.stringify({'event': 'skip'}));">
 <!--<input type="submit" value="Change Next Track" onclick="ws.send(JSON.stringify({'event': 'change_next_track'}));">-->
-<div id="main_cover"></div>
+<p id="main_coverr"></p>
 <!--<div id="next_cover"></div>-->
 
 <script>
 var currently_playing = document.getElementById('currently_playing');
-var main_cover = document.getElementById('main_cover');
+var main_cover = document.getElementById('main_coverr');
 // websocket stuff
             var ws = new WebSocket("ws://127.0.0.1:5743/");
 
@@ -29,7 +29,7 @@ var main_cover = document.getElementById('main_cover');
                     audio.play();
                 } else if (data['command'] == 'display_new_nav_content') {
                     console.log('displaying');
-                    main_cover.innerHtml = data['content'];
+                    main_cover.innerHTML = data['content'];
                 }
             };
             ws.onopen = function(e) {
@@ -40,7 +40,7 @@ var main_cover = document.getElementById('main_cover');
                // document.getElementById('connection_status').innerHTML = '<span style="background-color: #FF3333;">not connected to backend</span>';
             };
 // functions
-function defnavToArtist(artist) {
+function navToArtist(artist) {
     ws.send(JSON.stringify({'event': 'navigate', 'address': 'artist', 'params': [artist]}));
 }
 </script>
