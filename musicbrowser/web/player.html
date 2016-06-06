@@ -27,6 +27,7 @@ var next_file;
                     next_file = data['file_path'];
                 } else if (data['command'] == 'skip_to_next_file') {
                     initial_play(next_file);
+                    ws.send(JSON.stringify({'event': 'did_skip_to_next_file', 'track_skipped_to': next_file}));
                     next_file = null;
                 } else if (data['command'] == 'play_pause') {
                     if (!!audio.src) {
@@ -56,8 +57,8 @@ var next_file;
             audio.addEventListener('ended',function(e){
                 if (!!next_file) {
                     var tmp_next = next_file;
-                    next_file = null;
                     ws.send(JSON.stringify({'event': 'finished_playing_track', 'finished_track': audio.src, 'new_track': tmp_next}));
+                    next_file = null;
                     audio.src = tmp_next;
                     initial_play(tmp_next);
                 } else {

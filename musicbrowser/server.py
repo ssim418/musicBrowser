@@ -15,6 +15,7 @@ import time
 
 import socket
 import random
+from logging.handlers import RotatingFileHandler
 
 index = {}
 
@@ -142,7 +143,8 @@ def get_random_track():
     while True:
         try:
             return get()
-        except ValueError:
+        except Exception:
+            print('error random')
             pass
 
 
@@ -176,6 +178,11 @@ class MyServerProtocol(WebSocketServerProtocol):
                                      'file_path': track})
         self.factory.send_to_controller({'command': 'set_currently_playing',
                                          'content': track})
+        self.log_track_play(track)
+
+    def log_track_play(self, track):
+        playlog.info(track)
+
 
     async def onMessage(self, payload, isBinary):
         if isBinary:
@@ -201,15 +208,22 @@ class MyServerProtocol(WebSocketServerProtocol):
             elif event == 'need_new_tracks':
                 self.force_play(web_filename(get_random_track()))
                 self.set_next_playing(web_filename(get_random_track()))
+            elif event == 'change_next_track':
+                self.set_next_playing(web_filename(get_random_track()))
             elif event == 'skip':
                 self.factory.send_to_player({'command': 'skip_to_next_file'})
-                next_track = web_filename(get_random_track())
-                self.factory.send_to_player({'command': 'skip_to_next_file'})
+                self.set_next_playing(web_filename(get_random_track()))
+            elif event == 'did_skip_to_next_file':
+                self.factory.send_to_controller({'command': 'set_currently_playing',
+                                                 'content': data['track_skipped_to']})
+                self.log_track_play(data['track_skipped_to'])
+                self.set_next_playing(web_filename(get_random_track()))
             elif event == 'finished_playing_track':
-                now_playing = data['finished_track']
+                now_playing = data['new_track']
                 self.factory.send_to_controller({'command': 'set_currently_playing',
                                                  'content': now_playing})
                 self.set_next_playing(web_filename(get_random_track()))
+                self.log_track_play(now_playing)
                 # self.factory.send_to_player({'command': 'set_next_file',
                 #                              'file_path': next_up})
                 # self.factory.send_to_controller({'command': 'set_next_up',
@@ -315,11 +329,14 @@ if __name__ == '__main__':
     logger = logging.getLogger('videotrim')
     logger.setLevel(logging.DEBUG)
 
+    playlog = logging.getLogger('playlog')
+    playlog.setLevel(logging.INFO)
+
     # handlers
     ten_megabytes = 10 ** 7
 
-    # defaultFileHandler = RotatingFileHandler(os.path.join(log_dir(), 'log.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
-    # defaultFileHandler.setFormatter(logFormatter)
+    playlogFileHandler = RotatingFileHandler('playlog.log', encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
+    playlogFileHandler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
     #
     # ffmpegFileHandler = RotatingFileHandler(os.path.join(log_dir(), 'ffmpeg.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
     # ffmpegFileHandler.setFormatter(logFormatter)
@@ -340,6 +357,8 @@ if __name__ == '__main__':
 
     # logger.addHandler(defaultFileHandler)
     logger.addHandler(consoleHandler)
+
+    playlog.addHandler(playlogFileHandler)
 
     if not os.path.isfile('index.json'):
         raise ValueError('index.json not found')
