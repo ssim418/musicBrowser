@@ -111,7 +111,7 @@ def create_visual_artist_navigation(al_artist):
                     '   </div>' \
                     '</a>'.format(al_artist,
                                   album_data['alias'],
-                                  art,
+                                  art.replace('\\', '/'),
                                   album_data['title'])
     return nav_html
 
