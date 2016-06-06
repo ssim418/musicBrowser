@@ -17,6 +17,8 @@ import socket
 import random
 from logging.handlers import RotatingFileHandler
 
+SIMULATED_COVER_ART = True
+
 index = {}
 
 try:
@@ -70,7 +72,7 @@ def order_websocket_dict(json_str):
 def create_root_navigation():
     nav_html = ''
     for artist in sorted(index):
-        nav_html += '<a onclick="navToArtist(\'{}\');">{} ({})</a><br>'.format(get_artist_alias(artist), artist,
+        nav_html += '<a href="#artist/{}">{} ({})</a><br>'.format(get_artist_alias(artist), artist,
                                                                                len(index[artist]))
     return nav_html
 
@@ -95,12 +97,15 @@ def create_visual_artist_navigation(al_artist):
     for album_data in index[artist]:
         art = None
         for img in album_data['art']:
-            filename = os.path.split(img)[1]
-            if filename.lower().startswith('cover'):
+            if SIMULATED_COVER_ART:
                 art = img
+            else:
+                filename = os.path.split(img)[1]
+                if filename.lower().startswith('cover'):
+                    art = img
         if art is None:
             art = ""
-        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">' \
+        nav_html += '<a href="#artist/{}/album/{}">' \
                     '   <div style="width:300px;float: left;">' \
                     '   <img src="file:///{}" width="100%">{}' \
                     '   </div>' \
@@ -123,15 +128,16 @@ def create_album_navigation(al_artist, al_album):
 
 def handle_navigation(payload):
     address = payload['address']
-    if address == 'root':
+    split = address.split('/')
+    if address == 'root' or address == '':
         return {'command': 'display_new_nav_content',
                 'content': create_root_navigation()}
-    elif address == 'artist':
+    elif split[0] == 'artist' and len(split) == 2:
         return {'command': 'display_new_nav_content',
-                'content': create_visual_artist_navigation(payload['params'][0])}
-    elif address == 'album':
+                'content': create_visual_artist_navigation(split[1])}
+    elif split[0] == 'artist' and split[2] == 'album' and len(split) == 4:
         return {'command': 'display_new_nav_content',
-                'content': create_album_navigation(payload['params'][0], payload['params'][1])}
+                'content': create_album_navigation(split[1], split[3])}
 
 
 def get_random_track():

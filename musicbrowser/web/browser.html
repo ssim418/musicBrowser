@@ -19,6 +19,16 @@
 var currently_playing = document.getElementById('currently_playing');
 var next_up = document.getElementById('next_up');
 var main_cover = document.getElementById('main_coverr');
+
+
+// navigation
+            function locationHashChanged() {
+                ws.send(JSON.stringify({'event': 'navigate', 'address': window.location.hash.substr(1)}));
+            }
+
+            window.onhashchange = locationHashChanged;
+
+
 // websocket stuff
             var ws = new WebSocket("ws://127.0.0.1:5743/");
 
