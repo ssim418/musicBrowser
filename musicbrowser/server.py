@@ -14,7 +14,7 @@ import time
 # from videotrim import settings
 
 import socket
-from random import random
+import random
 
 index = {}
 
@@ -69,16 +69,44 @@ def order_websocket_dict(json_str):
 def create_root_navigation():
     nav_html = ''
     for artist in sorted(index):
-        nav_html += '<a onclick="navToArtist(\'{}\');">{} ({})</a><br>'.format(get_artist_alias(artist), artist, len(index[artist]))
+        nav_html += '<a onclick="navToArtist(\'{}\');">{} ({})</a><br>'.format(get_artist_alias(artist), artist,
+                                                                               len(index[artist]))
     return nav_html
 
 
-def create_artist_navigation(al_artist):
+def create_plaintext_artist_navigation(al_artist):
     nav_html = ''
     # pprint.pprint(aliased_artists)
     artist = aliased_artists[int(al_artist)]
     for album_data in index[artist]:
-        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(al_artist, album_data['alias'], album_data['title'])
+        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(al_artist, album_data['alias'],
+                                                                                 album_data['title'])
+    return nav_html
+
+
+img_width = "300px"
+
+
+def create_visual_artist_navigation(al_artist):
+    nav_html = ''
+    # pprint.pprint(aliased_artists)
+    artist = aliased_artists[int(al_artist)]
+    for album_data in index[artist]:
+        art = None
+        for img in album_data['art']:
+            filename = os.path.split(img)[1]
+            if filename.lower().startswith('cover'):
+                art = img
+        if art is None:
+            art = ""
+        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">' \
+                    '   <div style="width:300px;float: left;">' \
+                    '   <img src="file:///{}" width="100%">{}' \
+                    '   </div>' \
+                    '</a>'.format(al_artist,
+                                  album_data['alias'],
+                                  art,
+                                  album_data['title'])
     return nav_html
 
 
@@ -99,7 +127,7 @@ def handle_navigation(payload):
                 'content': create_root_navigation()}
     elif address == 'artist':
         return {'command': 'display_new_nav_content',
-                'content': create_artist_navigation(payload['params'][0])}
+                'content': create_visual_artist_navigation(payload['params'][0])}
     elif address == 'album':
         return {'command': 'display_new_nav_content',
                 'content': create_album_navigation(payload['params'][0], payload['params'][1])}
@@ -107,8 +135,19 @@ def handle_navigation(payload):
 
 def get_random_track():
     def get():
-        artist = random.choose(index.keys())
-        album = random.choose(index[artist])
+        artist = random.choice(list(index.keys()))
+        album = random.choice(index[artist])
+        return random.choice(album['tracks'])
+
+    while True:
+        try:
+            return get()
+        except ValueError:
+            pass
+
+
+def web_filename(f):
+    return 'file:///' + f.replace('\\', '/')
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -125,6 +164,18 @@ class MyServerProtocol(WebSocketServerProtocol):
         dumped = json.dumps(payload)
         ws_logger.debug(">>>> " + order_websocket_dict(dumped))
         self.sendMessage(dumped.encode('utf-8'))
+
+    def set_next_playing(self, track):
+        self.factory.send_to_player({'command': 'set_next_file',
+                                     'file_path': track})
+        self.factory.send_to_controller({'command': 'set_next_up',
+                                         'content': track})
+
+    def force_play(self, track):
+        self.factory.send_to_player({'command': 'initial_play',
+                                     'file_path': track})
+        self.factory.send_to_controller({'command': 'set_currently_playing',
+                                         'content': track})
 
     async def onMessage(self, payload, isBinary):
         if isBinary:
@@ -147,6 +198,22 @@ class MyServerProtocol(WebSocketServerProtocol):
                 self.factory.send_to_player({'command': 'play_pause'})
             elif event == 'navigate':
                 self.VtSendMessage(handle_navigation(data))
+            elif event == 'need_new_tracks':
+                self.force_play(web_filename(get_random_track()))
+                self.set_next_playing(web_filename(get_random_track()))
+            elif event == 'skip':
+                self.factory.send_to_player({'command': 'skip_to_next_file'})
+                next_track = web_filename(get_random_track())
+                self.factory.send_to_player({'command': 'skip_to_next_file'})
+            elif event == 'finished_playing_track':
+                now_playing = data['finished_track']
+                self.factory.send_to_controller({'command': 'set_currently_playing',
+                                                 'content': now_playing})
+                self.set_next_playing(web_filename(get_random_track()))
+                # self.factory.send_to_player({'command': 'set_next_file',
+                #                              'file_path': next_up})
+                # self.factory.send_to_controller({'command': 'set_next_up',
+                #                                  'content': next_up})
 
                 # to_client = data
                 # to_client['command'] = 'play'
@@ -164,6 +231,7 @@ class MyServerProtocol(WebSocketServerProtocol):
 
     def onClose(self, wasClean, code, reason):
         ws_logger.debug("WebSocket connection closed: {0}".format(reason))
+
 
 class AudioFactory(WebSocketServerFactory):
     def __init__(self, *args, **kwargs):
@@ -208,11 +276,13 @@ def start():
         server.close()
         loop.close()
 
+
 def get_artist_alias(artist):
     for alias in aliased_artists:
         if artist == aliased_artists[alias]:
             return alias
     raise ValueError('alias could not be resolved')
+
 
 def get_album_object(al_artist, al_album):
     for album in index[aliased_artists[int(al_artist)]]:
@@ -220,12 +290,14 @@ def get_album_object(al_artist, al_album):
             return album
     raise ValueError('alias could not be resolved')
 
+
 def create_album_track_aliases():
     alias_count = 0
     for artist in index:
         for album in index[artist]:
             alias_count += 1
             album['alias'] = alias_count
+
 
 if __name__ == '__main__':
     logFormatter = logging.Formatter("%(asctime)s %(name)-9s %(levelname)-5.5s %(message)s")
@@ -244,7 +316,7 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     # handlers
-    ten_megabytes = 10**7
+    ten_megabytes = 10 ** 7
 
     # defaultFileHandler = RotatingFileHandler(os.path.join(log_dir(), 'log.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
     # defaultFileHandler.setFormatter(logFormatter)

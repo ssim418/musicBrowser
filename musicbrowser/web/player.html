@@ -5,11 +5,11 @@
     <title>player</title>
 </head>
 <body>
+<div id="connection_status"><span style="background-color: #FF3333;">not connected to backend</span></div>
 
 <audio id="audio" preload="auto" tabindex="0" controls="" type="audio/mpeg" style="width: 100%;">
     <!--<source type="audio/mp3" src="">-->
 </audio>
-<div id="connection_status"></div>
 <script>
 var uninitialized = true;
 var audio = document.getElementById('audio');
@@ -22,25 +22,31 @@ var next_file;
                 console.log('received from server: ' + event.data);
                 var data = JSON.parse(event.data);
                 if (data['command'] == 'initial_play') {
-                    console.log('trying to play');
-                    audio.src = data['file_path'];
-                    audio.type = "audio/mpeg";
-                    console.log('audio src: ' + audio.src);
-                    audio.load();
-                    audio.play();
+                    initial_play(data['file_path']);
                 } else if (data['command'] == 'set_next_file') {
                     next_file = data['file_path'];
+                } else if (data['command'] == 'skip_to_next_file') {
+                    initial_play(next_file);
+                    next_file = null;
                 } else if (data['command'] == 'play_pause') {
-                    if (audio.paused) {
-                        audio.play();
+                    if (!!audio.src) {
+                        console.log('audiop src was not null');
+                        if (audio.paused) {
+                            audio.play();
+                        } else {
+                            audio.pause();
+                        }
                     } else {
-                        audio.pause();
+                        console.log('audio src was null');
+                        ws.send(JSON.stringify({'event': 'need_new_tracks'}));
                     }
                 } else {
-                    alert('error: unrecognised command');
+                    console.log('unrecognised command');
+                    alert('unrecognised command');
                 }
             };
             ws.onopen = function(e) {
+                document.getElementById('connection_status').innerHTML = '';
                 ws.send(JSON.stringify({'event': 'register_as_player'}));
             };
             ws.onclose = function(e) {
@@ -49,15 +55,23 @@ var next_file;
 // track finished callback
             audio.addEventListener('ended',function(e){
                 if (!!next_file) {
-                    ws.send(JSON.stringify({'event': 'finished_playing_track', 'finished_track': audio.src, 'new_track': next_file}));
-                    audio.src = next_file;
-                    audio.type = "audio/mpeg";
-                    audio.load();
-                    audio.play();
+                    var tmp_next = next_file;
+                    next_file = null;
+                    ws.send(JSON.stringify({'event': 'finished_playing_track', 'finished_track': audio.src, 'new_track': tmp_next}));
+                    audio.src = tmp_next;
+                    initial_play(tmp_next);
                 } else {
                     ws.send(JSON.stringify({'event': 'need_new_tracks'}));
                 }
             });
+// play track
+function initial_play(source) {
+    audio.src = source;
+    audio.type = "audio/mpeg";
+    audio.load();
+    audio.play();
+    console.log('now playing ' + source);
+}
 </script>
 </body>
 </html>

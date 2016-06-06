@@ -5,8 +5,9 @@
     <title>browser</title>
 </head>
 <body>
-
+<div id="connection_status"><span style="background-color: #FF3333;">not connected to backend</span></div>
 <div id="currently_playing"></div>
+<div id="next_up"></div>
 <!--<div id="next_up"></div>-->
 <input type="submit" value="Play/Pause" onclick="ws.send(JSON.stringify({'event': 'play_pause'}));">
 <input type="submit" value="Skip to next Track" onclick="ws.send(JSON.stringify({'event': 'skip'}));">
@@ -16,6 +17,7 @@
 
 <script>
 var currently_playing = document.getElementById('currently_playing');
+var next_up = document.getElementById('next_up');
 var main_cover = document.getElementById('main_coverr');
 // websocket stuff
             var ws = new WebSocket("ws://127.0.0.1:5743/");
@@ -30,14 +32,22 @@ var main_cover = document.getElementById('main_coverr');
                 } else if (data['command'] == 'display_new_nav_content') {
                     console.log('displaying');
                     main_cover.innerHTML = data['content'];
+                } else if (data['command'] == 'set_currently_playing') {
+                    currently_playing.innerHTML = 'now playing: ' + data['content'];
+                } else if (data['command'] == 'set_next_up') {
+                    next_up.innerHTML = 'next up: ' + data['content'];
+                } else {
+                    console.log('unrecognised command');
+                    alert('unrecognised command');
                 }
             };
             ws.onopen = function(e) {
+                document.getElementById('connection_status').innerHTML = '';
                 ws.send(JSON.stringify({'event': 'register_as_controller'}));
                 ws.send(JSON.stringify({'event': 'navigate', 'address': 'root'}));
             };
             ws.onclose = function(e) {
-               // document.getElementById('connection_status').innerHTML = '<span style="background-color: #FF3333;">not connected to backend</span>';
+               document.getElementById('connection_status').innerHTML = '<span style="background-color: #FF3333;">not connected to backend</span>';
             };
 // functions
 function navToArtist(al_artist) {
