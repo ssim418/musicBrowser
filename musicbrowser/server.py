@@ -94,6 +94,8 @@ def create_visual_artist_navigation(al_artist):
     nav_html = ''
     # pprint.pprint(aliased_artists)
     artist = aliased_artists[int(al_artist)]
+    open_div = False
+    count = 0
     for album_data in index[artist]:
         art = None
         for img in album_data['art']:
@@ -105,14 +107,32 @@ def create_visual_artist_navigation(al_artist):
                     art = img
         if art is None:
             art = ""
-        nav_html += '<a href="#artist/{}/album/{}">' \
-                    '   <div style="width:300px;float: left;">' \
+        if count % 6 == 0:
+            if not open_div:
+                nav_html += '<div class="row">\n'
+                open_div = True
+            else:
+                nav_html += '</div>\n'
+                nav_html += '<div class="row">\n'
+                open_div = True
+        elif count % 6 == 0 and count != 0:
+            nav_html += '</div>\n'
+            open_div = False
+        count += 1
+        # nav_html += '<div class="col-md-3" href="#artist/{}/album/{}">' \
+        #             '   {}' \
+        #             '   </div>\n'.format(al_artist,
+        #                                  album_data['alias'],
+        #                                  album_data['title'])
+        nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-2">' \
                     '   <img src="file:///{}" width="100%">{}' \
-                    '   </div>' \
-                    '</a>'.format(al_artist,
+                    '   </div></a>\n'.format(al_artist,
                                   album_data['alias'],
                                   art.replace('\\', '/'),
                                   album_data['title'])
+    if open_div:
+        nav_html += '</div>\n'
+    # print(nav_html)
     return nav_html
 
 
