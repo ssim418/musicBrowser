@@ -40,11 +40,11 @@ var main_cover = document.getElementById('main_coverr');
                // document.getElementById('connection_status').innerHTML = '<span style="background-color: #FF3333;">not connected to backend</span>';
             };
 // functions
-function navToArtist(artist) {
-    ws.send(JSON.stringify({'event': 'navigate', 'address': 'artist', 'params': [artist]}));
+function navToArtist(al_artist) {
+    ws.send(JSON.stringify({'event': 'navigate', 'address': 'artist', 'params': [al_artist]}));
 }
-function navToAlbum(artist, album) {
-    ws.send(JSON.stringify({'event': 'navigate', 'address': 'album', 'params': [artist, album]}));
+function navToAlbum(al_artist, al_album) {
+    ws.send(JSON.stringify({'event': 'navigate', 'address': 'album', 'params': [al_artist, al_album]}));
 }
 </script>
 </body>

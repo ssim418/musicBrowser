@@ -1,3 +1,4 @@
+import pprint
 from collections import OrderedDict
 from datetime import datetime
 import os
@@ -13,6 +14,7 @@ import time
 # from videotrim import settings
 
 import socket
+from random import random
 
 index = {}
 
@@ -40,6 +42,8 @@ default_port = 5743
 
 new_tab_data = list()
 
+aliased_artists = {}
+
 
 class MyError(Exception):
     def __init__(self, value):
@@ -65,25 +69,26 @@ def order_websocket_dict(json_str):
 def create_root_navigation():
     nav_html = ''
     for artist in sorted(index):
-        nav_html += '<a onclick="navToArtist(\'{}\');">{} ({})</a><br>'.format(artist, artist, len(index[artist]))
+        nav_html += '<a onclick="navToArtist(\'{}\');">{} ({})</a><br>'.format(get_artist_alias(artist), artist, len(index[artist]))
     return nav_html
 
 
-def create_artist_navigation(artist):
+def create_artist_navigation(al_artist):
     nav_html = ''
-    # pprint.pprint(index[artist])
+    # pprint.pprint(aliased_artists)
+    artist = aliased_artists[int(al_artist)]
     for album_data in index[artist]:
-        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(artist, album_data['title'], album_data['title'])
+        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(al_artist, album_data['alias'], album_data['title'])
     return nav_html
 
 
-def create_album_navigation(artist, album):
+def create_album_navigation(al_artist, al_album):
     nav_html = ''
+    artist = aliased_artists[int(al_artist)]
+    album = get_album_object(al_artist, al_album)
     # pprint.pprint(index[artist])
-    for album_data in index[artist]:
-        if album_data['title'] == album:
-            for track in album_data['tracks']:
-                nav_html += '{}<br>'.format(track)
+    for track in album['tracks']:
+        nav_html += '{}<br>'.format(track)
     return nav_html
 
 
@@ -99,6 +104,11 @@ def handle_navigation(payload):
         return {'command': 'display_new_nav_content',
                 'content': create_album_navigation(payload['params'][0], payload['params'][1])}
 
+
+def get_random_track():
+    def get():
+        artist = random.choose(index.keys())
+        album = random.choose(index[artist])
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -198,6 +208,24 @@ def start():
         server.close()
         loop.close()
 
+def get_artist_alias(artist):
+    for alias in aliased_artists:
+        if artist == aliased_artists[alias]:
+            return alias
+    raise ValueError('alias could not be resolved')
+
+def get_album_object(al_artist, al_album):
+    for album in index[aliased_artists[int(al_artist)]]:
+        if int(al_album) == album['alias']:
+            return album
+    raise ValueError('alias could not be resolved')
+
+def create_album_track_aliases():
+    alias_count = 0
+    for artist in index:
+        for album in index[artist]:
+            alias_count += 1
+            album['alias'] = alias_count
 
 if __name__ == '__main__':
     logFormatter = logging.Formatter("%(asctime)s %(name)-9s %(levelname)-5.5s %(message)s")
@@ -247,5 +275,11 @@ if __name__ == '__main__':
         logger.info('loading index data...')
         index = json.load(f)
         logger.info('index data loaded successfully')
+
+    alias_count = 0
+    for artist in index:
+        alias_count += 1
+        aliased_artists[alias_count] = artist
+    create_album_track_aliases()
 
     start()
