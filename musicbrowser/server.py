@@ -65,7 +65,7 @@ def order_websocket_dict(json_str):
 def create_root_navigation():
     nav_html = ''
     for artist in sorted(index):
-        nav_html += '<a onclick="navToArtist(\'{}\'); return false;">{} ({})</a><br>'.format(artist, artist, len(index[artist]))
+        nav_html += '<a onclick="navToArtist(\'{}\');">{} ({})</a><br>'.format(artist, artist, len(index[artist]))
     return nav_html
 
 
@@ -73,7 +73,17 @@ def create_artist_navigation(artist):
     nav_html = ''
     # pprint.pprint(index[artist])
     for album_data in index[artist]:
-        nav_html += '<a onclick="navToArtist(\'{}\'); return false;">{}</a><br>'.format(album_data['title'], album_data['title'])
+        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(artist, album_data['title'], album_data['title'])
+    return nav_html
+
+
+def create_album_navigation(artist, album):
+    nav_html = ''
+    # pprint.pprint(index[artist])
+    for album_data in index[artist]:
+        if album_data['title'] == album:
+            for track in album_data['tracks']:
+                nav_html += '{}<br>'.format(track)
     return nav_html
 
 
@@ -85,6 +95,9 @@ def handle_navigation(payload):
     elif address == 'artist':
         return {'command': 'display_new_nav_content',
                 'content': create_artist_navigation(payload['params'][0])}
+    elif address == 'album':
+        return {'command': 'display_new_nav_content',
+                'content': create_album_navigation(payload['params'][0], payload['params'][1])}
 
 
 

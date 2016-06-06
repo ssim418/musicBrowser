@@ -43,6 +43,9 @@ var main_cover = document.getElementById('main_coverr');
 function navToArtist(artist) {
     ws.send(JSON.stringify({'event': 'navigate', 'address': 'artist', 'params': [artist]}));
 }
+function navToAlbum(artist, album) {
+    ws.send(JSON.stringify({'event': 'navigate', 'address': 'album', 'params': [artist, album]}));
+}
 </script>
 </body>
 </html>
