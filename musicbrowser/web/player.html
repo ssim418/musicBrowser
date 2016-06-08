@@ -67,6 +67,7 @@ var next_file;
             });
 // play track
 function initial_play(source) {
+    audio.pause();
     audio.src = source;
     audio.type = "audio/mpeg";
     audio.load();

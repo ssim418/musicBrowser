@@ -89,6 +89,9 @@ def create_plaintext_artist_navigation(al_artist):
 
 img_width = "300px"
 
+def display_album_art(al_artist, al_album, track_index):
+    pass
+
 
 def create_visual_artist_navigation(al_artist):
     nav_html = ''
@@ -96,7 +99,7 @@ def create_visual_artist_navigation(al_artist):
     artist = aliased_artists[int(al_artist)]
     open_div = False
     count = 0
-    for album_data in index[artist]:
+    for album_data in sorted(index[artist], key=lambda x: x['year']):
         art = None
         for img in album_data['art']:
             if SIMULATED_COVER_ART:
@@ -125,11 +128,12 @@ def create_visual_artist_navigation(al_artist):
         #                                  album_data['alias'],
         #                                  album_data['title'])
         nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-2">' \
-                    '   <img src="file:///{}" width="100%">{}' \
+                    '   <img src="file:///{}" width="100%">{} ({})' \
                     '   </div></a>\n'.format(al_artist,
                                   album_data['alias'],
                                   art.replace('\\', '/'),
-                                  album_data['title'])
+                                  album_data['title'],
+                                             album_data['year'])
     if open_div:
         nav_html += '</div>\n'
     # print(nav_html)
