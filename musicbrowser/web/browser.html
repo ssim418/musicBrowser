@@ -55,6 +55,8 @@ var main_cover = document.getElementById('main_coverr');
                     currently_playing.innerHTML = 'now playing: ' + data['content'];
                 } else if (data['command'] == 'set_next_up') {
                     next_up.innerHTML = 'next up: ' + data['content'];
+                } else if (data['command'] == 'alert') {
+                    alert(data['content']);
                 } else {
                     console.log('unrecognised command');
                     alert('unrecognised command');
