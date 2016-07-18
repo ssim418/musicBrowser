@@ -89,12 +89,12 @@ def create_plaintext_artist_navigation(al_artist):
 
 img_width = "300px"
 
-def display_album_art(al_artist, al_album, track_index):
-    artist = aliased_artists[int(al_artist)]
-    album = get_album_object(al_artist, al_album)
-    # pprint.pprint(index[artist])
-    for track in album['tracks']:
-        nav_html += '{}<br>'.format(track)
+# def display_album_art(al_artist, al_album, track_index):
+#     artist = aliased_artists[int(al_artist)]
+#     album = get_album_object(al_artist, al_album)
+#     # pprint.pprint(index[artist])
+#     for track in album['tracks']:
+#         nav_html += '{}<br>'.format(track)
 
 def create_visual_artist_navigation(al_artist):
     nav_html = ''
@@ -300,7 +300,7 @@ class AudioFactory(WebSocketServerFactory):
             self.player.VtSendMessage(payload)
 
     def send_to_controller(self, payload):
-        if self.player is None:
+        if self.controller is None:
             logger.error('no controller registered')
         else:
             self.controller.VtSendMessage(payload)
