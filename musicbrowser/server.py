@@ -76,6 +76,10 @@ def create_root_navigation():
                                                                                len(index[artist]))
     return nav_html
 
+# def display_currently_playing_info():
+#
+
+
 
 def create_plaintext_artist_navigation(al_artist):
     nav_html = ''
@@ -170,8 +174,16 @@ def handle_navigation(payload):
 def get_random_track():
     def get():
         artist = random.choice(list(index.keys()))
-        album = random.choice(index[artist])
-        return random.choice(album['tracks'])
+        album_data = random.choice(index[artist])
+        track = random.choice(album_data['tracks'])
+        track_data = dict()
+        track_data['artist'] = artist
+        track_data['album'] = album_data['title']
+        track_data['art'] = album_data['art']
+        track_data['track_filename'] = track
+        track_data['web_track_filename'] = 'file:///' + track.replace('\\', '/')
+        track_data['track_name'] = os.path.split(track)[1]
+        return track_data
 
     while True:
         try:
@@ -180,9 +192,6 @@ def get_random_track():
             print('error random')
             pass
 
-
-def web_filename(f):
-    return 'file:///' + f.replace('\\', '/')
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -202,13 +211,13 @@ class MyServerProtocol(WebSocketServerProtocol):
 
     def set_next_playing(self, track):
         self.factory.send_to_player({'command': 'set_next_file',
-                                     'file_path': track})
+                                     'track_data': track})
         self.factory.send_to_controller({'command': 'set_next_up',
                                          'content': track})
 
     def force_play(self, track):
         self.factory.send_to_player({'command': 'initial_play',
-                                     'file_path': track})
+                                     'track_data': track})
         self.factory.send_to_controller({'command': 'set_currently_playing',
                                          'content': track})
         self.log_track_play(track)
@@ -239,23 +248,23 @@ class MyServerProtocol(WebSocketServerProtocol):
             elif event == 'navigate':
                 self.VtSendMessage(handle_navigation(data))
             elif event == 'need_new_tracks':
-                self.force_play(web_filename(get_random_track()))
-                self.set_next_playing(web_filename(get_random_track()))
+                self.force_play(get_random_track())
+                self.set_next_playing(get_random_track())
             elif event == 'change_next_track':
-                self.set_next_playing(web_filename(get_random_track()))
+                self.set_next_playing(get_random_track())
             elif event == 'skip':
                 self.factory.send_to_player({'command': 'skip_to_next_file'})
-                self.set_next_playing(web_filename(get_random_track()))
+                self.set_next_playing(get_random_track())
             elif event == 'did_skip_to_next_file':
                 self.factory.send_to_controller({'command': 'set_currently_playing',
                                                  'content': data['track_skipped_to']})
                 self.log_track_play(data['track_skipped_to'])
-                self.set_next_playing(web_filename(get_random_track()))
+                self.set_next_playing(get_random_track())
             elif event == 'finished_playing_track':
                 now_playing = data['new_track']
                 self.factory.send_to_controller({'command': 'set_currently_playing',
                                                  'content': now_playing})
-                self.set_next_playing(web_filename(get_random_track()))
+                self.set_next_playing(get_random_track())
                 self.log_track_play(now_playing)
                 # self.factory.send_to_player({'command': 'set_next_file',
                 #                              'file_path': next_up})

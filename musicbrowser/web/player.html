@@ -22,11 +22,11 @@ var next_file;
                 console.log('received from server: ' + event.data);
                 var data = JSON.parse(event.data);
                 if (data['command'] == 'initial_play') {
-                    initial_play(data['file_path']);
+                    initial_play(data['track_data']['web_track_filename']);
                 } else if (data['command'] == 'set_next_file') {
-                    next_file = data['file_path'];
+                    next_file = data['track_data'];
                 } else if (data['command'] == 'skip_to_next_file') {
-                    initial_play(next_file);
+                    initial_play(next_file['web_track_filename']);
                     ws.send(JSON.stringify({'event': 'did_skip_to_next_file', 'track_skipped_to': next_file}));
                     next_file = null;
                 } else if (data['command'] == 'play_pause') {

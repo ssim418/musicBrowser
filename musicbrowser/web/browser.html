@@ -52,9 +52,11 @@ var main_cover = document.getElementById('main_coverr');
                     console.log('displaying');
                     main_cover.innerHTML = data['content'];
                 } else if (data['command'] == 'set_currently_playing') {
-                    currently_playing.innerHTML = 'now playing: ' + data['content'];
+                    track_data = data['content'];
+                    currently_playing.innerHTML = 'now playing: <b>' + track_data['artist'] + '</b> ' + track_data['album'] + ' <b>' + track_data['track_name'] + '</b>';
                 } else if (data['command'] == 'set_next_up') {
-                    next_up.innerHTML = 'next up: ' + data['content'];
+                    track_data = data['content'];
+                    next_up.innerHTML = 'next up: <b>' + track_data['artist'] + '</b> ' + track_data['album'] + ' <b>' + track_data['track_name'] + '</b>';
                 } else if (data['command'] == 'alert') {
                     alert(data['content']);
                 } else {
