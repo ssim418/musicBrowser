@@ -28,7 +28,13 @@ def parse_album_files(album_folder):
                 tracks.append(path)
             elif lower_name.endswith('.jpg') or lower_name.endswith('.jpeg') or lower_name.endswith('.png'):
                 art.append(path)
-    return {'tracks': tracks, 'art': art}
+    sorted_art = list()
+    for a in art:
+        if os.path.split(a)[1].lower().startswith('cover'):
+            sorted_art.insert(0, a)
+        else:
+            sorted_art.append(a)
+    return {'tracks': tracks, 'art': sorted_art}
 
 
 def create():

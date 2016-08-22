@@ -110,11 +110,11 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
     artist = aliased_artists[int(al_artist)]
     open_div = False
     count = 0
-    ordered = sorted(index[artist], key=lambda x: x['year'])
     if order == 'alphabetical':
         ordered = sorted(index[artist], key=lambda x: x['title'].lower())
         nav_html += '<input type="submit" value="chronological" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1)}));">'
     else:
+        ordered = sorted(index[artist], key=lambda x: x['year'])
         nav_html += '<input type="submit" value="alphabetical" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1) + \'/alphabetical\'}));">'
     for album_data in ordered:
         art = None
@@ -147,9 +147,9 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
         nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-2">' \
                     '   <img src="file:///{}" width="100%">{} ({})' \
                     '   </div></a>\n'.format(al_artist,
-                                  album_data['alias'],
-                                  art.replace('\\', '/'),
-                                  album_data['title'],
+                                             album_data['alias'],
+                                             art.replace('\\', '/'),
+                                             album_data['title'],
                                              album_data['year'])
     if open_div:
         nav_html += '</div>\n'
@@ -157,7 +157,7 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
     return nav_html
 
 
-def create_album_navigation(al_artist, al_album, art_index=0):
+def create_album_navigation(al_artist, al_album, art_index=0, track=None):
     nav_html = ''
     artist = aliased_artists[int(al_artist)]
     nav_html += '<h1><a href="#artist/%s">%s</a></h1>' % (al_artist, artist)
@@ -173,8 +173,11 @@ def create_album_navigation(al_artist, al_album, art_index=0):
         nav_html += '<a href="{}">{}</a>'.format(url, img)
     nav_html += '</div>'
     nav_html += '<div class="col-md-7">'
-    for track in album['tracks']:
-        nav_html += '{}<br>'.format(os.path.basename(track))
+    for index, track_path in enumerate(album['tracks']):
+        if track is not None and index == track:
+            nav_html += '<b>{}</b><br>'.format(os.path.basename(track_path))
+        else:
+            nav_html += '{}<br>'.format(os.path.basename(track_path))
     nav_html += '</div>'
     nav_html += '</div class="row">'
     nav_html += '<div class="row">'
@@ -203,7 +206,7 @@ def handle_navigation(payload):
                 'content': create_album_navigation(split[1], split[3])}
     elif split[0] == 'artist' and split[2] == 'album' and split[4] == 'art' and len(split) == 6:
         return {'command': 'display_new_nav_content',
-                'content': create_album_navigation(split[1], split[3], int(split[5]))}
+                'content': create_album_navigation(split[1], split[3], art_index=int(split[5]))}
 
 
 def get_random_track():
@@ -225,8 +228,6 @@ def get_random_track():
             return get()
         except Exception:
             print('error random')
-            pass
-
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -256,9 +257,10 @@ class MyServerProtocol(WebSocketServerProtocol):
         self.factory.send_to_controller({'command': 'set_currently_playing',
                                          'content': track})
         self.log_track_play(track)
+        self.show_currently_playing(track)
 
     def log_track_play(self, track):
-        playlog.info(track)
+        playlog.info(track['track_filename'])
 
 
     async def onMessage(self, payload, isBinary):
@@ -293,24 +295,16 @@ class MyServerProtocol(WebSocketServerProtocol):
             elif event == 'did_skip_to_next_file':
                 self.factory.send_to_controller({'command': 'set_currently_playing',
                                                  'content': data['track_skipped_to']})
+                self.show_currently_playing(data['track_skipped_to'])
                 self.log_track_play(data['track_skipped_to'])
                 self.set_next_playing(get_random_track())
             elif event == 'finished_playing_track':
                 now_playing = data['new_track']
                 self.factory.send_to_controller({'command': 'set_currently_playing',
                                                  'content': now_playing})
+                self.show_currently_playing(now_playing)
                 self.set_next_playing(get_random_track())
                 self.log_track_play(now_playing)
-                # self.factory.send_to_player({'command': 'set_next_file',
-                #                              'file_path': next_up})
-                # self.factory.send_to_controller({'command': 'set_next_up',
-                #                                  'content': next_up})
-
-                # to_client = data
-                # to_client['command'] = 'play'
-                # to_client['file_path'] = 'file:///' + data['file_path']
-                # logger.info('sending play data: ' + str(data))
-                # self.factory.send_to_player(data)
             elif event == 'raise_exception':
                 # test: start_server.bat should not close
                 # https://docs.python.org/3.5/library/exceptions.html#exception-hierarchy
@@ -322,6 +316,17 @@ class MyServerProtocol(WebSocketServerProtocol):
 
     def onClose(self, wasClean, code, reason):
         ws_logger.debug("WebSocket connection closed: {0}".format(reason))
+
+    def show_currently_playing(self, track):
+        al_artist = get_artist_alias(track['artist'])
+        al_album = get_album_alias(al_artist, track['album'])
+        album_obj = get_album_object(al_artist, al_album)
+        track_number = 0
+        for i, trck in enumerate(album_obj['tracks']):
+            if track['track_filename'] == trck:
+                track_number = i
+        self.factory.send_to_controller({'command': 'display_new_nav_content',
+                                         'content': create_album_navigation(al_artist, al_album, track=track_number)})
 
 
 class AudioFactory(WebSocketServerFactory):
@@ -373,6 +378,13 @@ def get_artist_alias(artist):
     for alias in aliased_artists:
         if artist == aliased_artists[alias]:
             return alias
+    raise ValueError('alias could not be resolved')
+
+
+def get_album_alias(al_artist, album):
+    for album_obj in index[aliased_artists[int(al_artist)]]:
+        if album == album_obj['title']:
+            return album_obj['alias']
     raise ValueError('alias could not be resolved')
 
 
