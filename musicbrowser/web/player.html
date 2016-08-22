@@ -59,8 +59,8 @@ var next_file;
                     var tmp_next = next_file;
                     ws.send(JSON.stringify({'event': 'finished_playing_track', 'finished_track': audio.src, 'new_track': tmp_next}));
                     next_file = null;
-                    audio.src = tmp_next;
-                    initial_play(tmp_next);
+                    audio.src = tmp_next['web_track_filename'];
+                    initial_play(tmp_next['web_track_filename']);
                 } else {
                     ws.send(JSON.stringify({'event': 'need_new_tracks'}));
                 }

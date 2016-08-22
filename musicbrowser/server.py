@@ -84,15 +84,14 @@ def create_root_navigation():
 #
 
 
-
-def create_plaintext_artist_navigation(al_artist):
-    nav_html = ''
-    # pprint.pprint(aliased_artists)
-    artist = aliased_artists[int(al_artist)]
-    for album_data in index[artist]:
-        nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(al_artist, album_data['alias'],
-                                                                                 album_data['title'])
-    return nav_html
+# def create_plaintext_artist_navigation(al_artist):
+#     nav_html = ''
+#     # pprint.pprint(aliased_artists)
+#     artist = aliased_artists[int(al_artist)]
+#     for album_data in index[artist]:
+#         nav_html += '<a onclick="navToAlbum(\'{}\', \'{}\');">{}</a><br>'.format(al_artist, album_data['alias'],
+#                                                                                  album_data['title'])
+#     return nav_html
 
 
 img_width = "300px"
@@ -151,13 +150,32 @@ def create_visual_artist_navigation(al_artist):
     return nav_html
 
 
-def create_album_navigation(al_artist, al_album):
+def create_album_navigation(al_artist, al_album, art_index=0):
     nav_html = ''
     artist = aliased_artists[int(al_artist)]
+    nav_html += '<h1><a href="#artist/%s">%s</a></h1>' % (al_artist, artist)
     album = get_album_object(al_artist, al_album)
-    # pprint.pprint(index[artist])
+    nav_html += '<h2>%s (%s)</h2>' % (album['title'], album['year'])
+    nav_html += '<div class="row" style="height: 50%;">'
+    nav_html += '<div class="col-md-5">'
+    img = '<img src="file:///{}" width="100%">'.format(album['art'][art_index].replace('\\', '/'))
+    if len(album['art']) == 1:
+        nav_html += img
+    else:
+        url = '#artist/{}/album/{}/art/{}'.format(al_artist, al_album, ((art_index + 1) % (len(album['art']))))
+        nav_html += '<a href="{}">{}</a>'.format(url, img)
+    nav_html += '</div>'
+    nav_html += '<div class="col-md-7">'
     for track in album['tracks']:
-        nav_html += '{}<br>'.format(track)
+        nav_html += '{}<br>'.format(os.path.basename(track))
+    nav_html += '</div>'
+    nav_html += '</div class="row">'
+    nav_html += '<div class="row">'
+    if len(album['art']) == 1:
+        nav_html += '<div class="col-md-1">1 of 1</div>'
+    else:
+        nav_html += '<div class="col-md-1"><b style="color: green;">%s of %s<b></div>' % (art_index + 1, len(album['art']))
+    nav_html += '</div class="row">'
     return nav_html
 
 
@@ -173,6 +191,9 @@ def handle_navigation(payload):
     elif split[0] == 'artist' and split[2] == 'album' and len(split) == 4:
         return {'command': 'display_new_nav_content',
                 'content': create_album_navigation(split[1], split[3])}
+    elif split[0] == 'artist' and split[2] == 'album' and split[4] == 'art' and len(split) == 6:
+        return {'command': 'display_new_nav_content',
+                'content': create_album_navigation(split[1], split[3], int(split[5]))}
 
 
 def get_random_track():
