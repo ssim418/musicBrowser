@@ -103,13 +103,20 @@ img_width = "300px"
 #     for track in album['tracks']:
 #         nav_html += '{}<br>'.format(track)
 
-def create_visual_artist_navigation(al_artist):
+
+def create_visual_artist_navigation(al_artist, order='chronological'):
     nav_html = ''
     # pprint.pprint(aliased_artists)
     artist = aliased_artists[int(al_artist)]
     open_div = False
     count = 0
-    for album_data in sorted(index[artist], key=lambda x: x['year']):
+    ordered = sorted(index[artist], key=lambda x: x['year'])
+    if order == 'alphabetical':
+        ordered = sorted(index[artist], key=lambda x: x['title'].lower())
+        nav_html += '<input type="submit" value="chronological" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1)}));">'
+    else:
+        nav_html += '<input type="submit" value="alphabetical" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1) + \'/alphabetical\'}));">'
+    for album_data in ordered:
         art = None
         for img in album_data['art']:
             if SIMULATED_COVER_ART:
@@ -188,6 +195,9 @@ def handle_navigation(payload):
     elif split[0] == 'artist' and len(split) == 2:
         return {'command': 'display_new_nav_content',
                 'content': create_visual_artist_navigation(split[1])}
+    elif split[0] == 'artist' and len(split) == 3:
+        return {'command': 'display_new_nav_content',
+                'content': create_visual_artist_navigation(split[1], order=split[2])}
     elif split[0] == 'artist' and split[2] == 'album' and len(split) == 4:
         return {'command': 'display_new_nav_content',
                 'content': create_album_navigation(split[1], split[3])}
