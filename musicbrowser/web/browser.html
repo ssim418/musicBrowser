@@ -21,6 +21,7 @@
 <input type="submit" value="Skip to next Track" onclick="ws.send(JSON.stringify({'event': 'skip'}));">
 <input type="submit" value="Change Next Track" onclick="ws.send(JSON.stringify({'event': 'change_next_track'}));">
 <input type="submit" value="Home" onclick="window.location.hash = '';">
+<input type="checkbox" id="track" onclick="tracker_state_modified();" checked> track player
 <p id="main_coverr"></p>
 <!--<div id="next_cover"></div>-->
 
@@ -29,6 +30,9 @@ var currently_playing = document.getElementById('currently_playing');
 var next_up = document.getElementById('next_up');
 var main_cover = document.getElementById('main_coverr');
 
+// default state: tracking
+document.getElementById('track').checked = true;
+tracker_state_modified();
 
 // navigation
             function locationHashChanged() {
@@ -78,6 +82,13 @@ function navToArtist(al_artist) {
 }
 function navToAlbum(al_artist, al_album) {
     ws.send(JSON.stringify({'event': 'navigate', 'address': 'album', 'params': [al_artist, al_album]}));
+}
+function tracker_state_modified() {
+    if (document.getElementById('track').checked) {
+
+    } else {
+
+    }
 }
 </script>
 </body>

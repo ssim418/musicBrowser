@@ -17,7 +17,7 @@ import socket
 import random
 from logging.handlers import RotatingFileHandler
 
-SIMULATED_COVER_ART = True
+SIMULATED_COVER_ART = False
 
 index = {}
 import os
@@ -118,13 +118,11 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
         nav_html += '<input type="submit" value="alphabetical" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1) + \'/alphabetical\'}));">'
     for album_data in ordered:
         art = None
-        for img in album_data['art']:
-            if SIMULATED_COVER_ART:
-                art = img
-            else:
-                filename = os.path.split(img)[1]
-                if filename.lower().startswith('cover'):
-                    art = img
+        # album art classification is done during indexing
+        if len(album_data['art']) >= 1:
+            art = album_data['art'][0]
+        if SIMULATED_COVER_ART:
+            raise AssertionError("TODO")
         if art is None:
             art = ""
         if count % 6 == 0:
