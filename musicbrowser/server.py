@@ -21,6 +21,9 @@ SIMULATED_COVER_ART = True
 
 index = {}
 
+project_root = os.path.dirname(__file__)
+index_json = os.path.join(project_root, 'index.json')
+
 try:
     import asyncio
 except ImportError:
@@ -378,7 +381,7 @@ if __name__ == '__main__':
     # handlers
     ten_megabytes = 10 ** 7
 
-    playlogFileHandler = RotatingFileHandler('playlog.log', encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
+    playlogFileHandler = RotatingFileHandler(os.path.join(project_root,'playlog.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
     playlogFileHandler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
     #
     # ffmpegFileHandler = RotatingFileHandler(os.path.join(log_dir(), 'ffmpeg.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
@@ -402,10 +405,9 @@ if __name__ == '__main__':
     logger.addHandler(consoleHandler)
 
     playlog.addHandler(playlogFileHandler)
-
-    if not os.path.isfile('index.json'):
+    if not os.path.isfile(index_json):
         raise ValueError('index.json not found')
-    with open('index.json', 'r', encoding='utf-8') as f:
+    with open(index_json, 'r', encoding='utf-8') as f:
         logger.info('loading index data...')
         index = json.load(f)
         logger.info('index data loaded successfully')
