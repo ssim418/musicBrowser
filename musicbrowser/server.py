@@ -20,6 +20,7 @@ from logging.handlers import RotatingFileHandler
 SIMULATED_COVER_ART = True
 
 index = {}
+import os
 
 project_root = os.path.dirname(__file__)
 index_json = os.path.join(project_root, 'index.json')
@@ -381,7 +382,7 @@ if __name__ == '__main__':
     # handlers
     ten_megabytes = 10 ** 7
 
-    playlogFileHandler = RotatingFileHandler(os.path.join(project_root,'playlog.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
+    playlogFileHandler = RotatingFileHandler(os.path.join(project_root, 'playlog.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
     playlogFileHandler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
     #
     # ffmpegFileHandler = RotatingFileHandler(os.path.join(log_dir(), 'ffmpeg.log'), encoding='utf-8', maxBytes=ten_megabytes, backupCount=2)
