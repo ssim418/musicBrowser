@@ -191,20 +191,24 @@ def handle_navigation(payload):
     address = payload['address']
     split = address.split('/')
     if address == 'root' or address == '':
-        return {'command': 'display_new_nav_content',
-                'content': create_root_navigation()}
+        return [{'command': 'display_new_nav_content',
+                 'content': create_root_navigation()},
+                {'command': 'display_title',
+                 'title': '- browser -'}]
     elif split[0] == 'artist' and len(split) == 2:
-        return {'command': 'display_new_nav_content',
-                'content': create_visual_artist_navigation(split[1])}
+        return [{'command': 'display_new_nav_content',
+                'content': create_visual_artist_navigation(split[1])},
+                {'command': 'display_title',
+                 'title': aliased_artists[int(split[1])]}]
     elif split[0] == 'artist' and len(split) == 3:
-        return {'command': 'display_new_nav_content',
-                'content': create_visual_artist_navigation(split[1], order=split[2])}
+        return [{'command': 'display_new_nav_content',
+                'content': create_visual_artist_navigation(split[1], order=split[2])}]
     elif split[0] == 'artist' and split[2] == 'album' and len(split) == 4:
-        return {'command': 'display_new_nav_content',
-                'content': create_album_navigation(split[1], split[3])}
+        return [{'command': 'display_new_nav_content',
+                'content': create_album_navigation(split[1], split[3])}]
     elif split[0] == 'artist' and split[2] == 'album' and split[4] == 'art' and len(split) == 6:
-        return {'command': 'display_new_nav_content',
-                'content': create_album_navigation(split[1], split[3], art_index=int(split[5]))}
+        return [{'command': 'display_new_nav_content',
+                'content': create_album_navigation(split[1], split[3], art_index=int(split[5]))}]
 
 
 def get_random_track():
@@ -281,7 +285,8 @@ class MyServerProtocol(WebSocketServerProtocol):
             elif event == 'play_pause':
                 self.factory.send_to_player({'command': 'play_pause'})
             elif event == 'navigate':
-                self.VtSendMessage(handle_navigation(data))
+                for message in handle_navigation(data):
+                    self.VtSendMessage(message)
             elif event == 'need_new_tracks':
                 self.force_play(get_random_track())
                 self.set_next_playing(get_random_track())

@@ -55,6 +55,8 @@ tracker_state_modified();
                 } else if (data['command'] == 'display_new_nav_content') {
                     console.log('displaying');
                     main_cover.innerHTML = data['content'];
+                } else if (data['command'] == 'display_title') {
+                    document.title = data['title'];
                 } else if (data['command'] == 'set_currently_playing') {
                     track_data = data['content'];
                     currently_playing.innerHTML = 'now playing: <b>' + track_data['artist'] + '</b> ' + track_data['album'] + ' <b>' + track_data['track_name'] + '</b>';
