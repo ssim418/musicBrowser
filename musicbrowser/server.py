@@ -104,7 +104,7 @@ img_width = "300px"
 #         nav_html += '{}<br>'.format(track)
 
 
-def create_visual_artist_navigation(al_artist, order='chronological'):
+def create_visual_artist_navigation(al_artist, order='chronological', width=6):
     nav_html = ''
     # pprint.pprint(aliased_artists)
     artist = aliased_artists[int(al_artist)]
@@ -112,10 +112,10 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
     count = 0
     if order == 'alphabetical':
         ordered = sorted(index[artist], key=lambda x: x['title'].lower())
-        nav_html += '<input type="submit" value="chronological" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1)}));">'
+        nav_html += '<input type="submit" value="chronological" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1), \'artist_album_width\': artist_album_width}));">'
     else:
         ordered = sorted(index[artist], key=lambda x: x['year'])
-        nav_html += '<input type="submit" value="alphabetical" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1) + \'/alphabetical\'}));">'
+        nav_html += '<input type="submit" value="alphabetical" onclick="ws.send(JSON.stringify({\'event\': \'navigate\', \'address\': window.location.hash.substr(1) + \'/alphabetical\', \'artist_album_width\': artist_album_width}));">'
     for album_data in ordered:
         art = None
         # album art classification is done during indexing
@@ -125,7 +125,9 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
             raise AssertionError("TODO")
         if art is None:
             art = ""
-        if count % 6 == 0:
+        if width not in [2, 3, 4, 6, 12]:
+            raise AssertionError('invalid width ' + str(width) + ', must be in {2, 3, 4, 6, 12}')
+        if count % width == 0:
             if not open_div:
                 nav_html += '<div class="row">\n'
                 open_div = True
@@ -133,7 +135,7 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
                 nav_html += '</div>\n'
                 nav_html += '<div class="row">\n'
                 open_div = True
-        elif count % 6 == 0 and count != 0:
+        elif count % width == 0 and count != 0:
             nav_html += '</div>\n'
             open_div = False
         count += 1
@@ -142,10 +144,11 @@ def create_visual_artist_navigation(al_artist, order='chronological'):
         #             '   </div>\n'.format(al_artist,
         #                                  album_data['alias'],
         #                                  album_data['title'])
-        nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-2">' \
+        nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-{}">' \
                     '   <img src="file:///{}" width="100%">{} ({})' \
                     '   </div></a>\n'.format(al_artist,
                                              album_data['alias'],
+                                             int(12/int(width)),
                                              art.replace('\\', '/'),
                                              album_data['title'],
                                              album_data['year'])
@@ -197,12 +200,12 @@ def handle_navigation(payload):
                  'title': '- browser -'}]
     elif split[0] == 'artist' and len(split) == 2:
         return [{'command': 'display_new_nav_content',
-                'content': create_visual_artist_navigation(split[1])},
+                'content': create_visual_artist_navigation(split[1], width=int(payload['artist_album_width']))},
                 {'command': 'display_title',
                  'title': aliased_artists[int(split[1])]}]
     elif split[0] == 'artist' and len(split) == 3:
         return [{'command': 'display_new_nav_content',
-                'content': create_visual_artist_navigation(split[1], order=split[2])}]
+                'content': create_visual_artist_navigation(split[1], order=split[2], width=int(payload['artist_album_width']))}]
     elif split[0] == 'artist' and split[2] == 'album' and len(split) == 4:
         return [{'command': 'display_new_nav_content',
                 'content': create_album_navigation(split[1], split[3])}]

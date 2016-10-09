@@ -22,6 +22,11 @@
 <input type="submit" value="Change Next Track" onclick="ws.send(JSON.stringify({'event': 'change_next_track'}));">
 <input type="submit" value="Home" onclick="window.location.hash = '';">
 <input type="checkbox" id="track" onclick="tracker_state_modified();" checked> track player
+    <input type="submit" value="2" onclick="artist_album_width = 2; locationHashChanged();">
+    <input type="submit" value="3" onclick="artist_album_width = 3; locationHashChanged();">
+    <input type="submit" value="4" onclick="artist_album_width = 4; locationHashChanged();">
+    <input type="submit" value="6" onclick="artist_album_width = 6; locationHashChanged();">
+    <input type="submit" value="12" onclick="artist_album_width = 12; locationHashChanged();">
 <p id="main_coverr"></p>
 <!--<div id="next_cover"></div>-->
 
@@ -29,6 +34,7 @@
 var currently_playing = document.getElementById('currently_playing');
 var next_up = document.getElementById('next_up');
 var main_cover = document.getElementById('main_coverr');
+var artist_album_width = 6;
 
 // default state: tracking
 document.getElementById('track').checked = true;
@@ -36,7 +42,7 @@ tracker_state_modified();
 
 // navigation
             function locationHashChanged() {
-                ws.send(JSON.stringify({'event': 'navigate', 'address': window.location.hash.substr(1)}));
+                ws.send(JSON.stringify({'event': 'navigate', 'address': window.location.hash.substr(1), 'artist_album_width': artist_album_width}));
             }
 
             window.onhashchange = locationHashChanged;
