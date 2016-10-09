@@ -27,18 +27,21 @@
     <input type="submit" value="4" onclick="settings['artist_album_width'] = 4; locationHashChanged();">
     <input type="submit" value="6" onclick="settings['artist_album_width'] = 6; locationHashChanged();">
     <input type="submit" value="12" onclick="settings['artist_album_width'] = 12; locationHashChanged();">
-<p id="main_coverr"></p>
+    <input id="sort_toggle" type="submit" value="zzzz" onclick="settings['alphabetical'] = !settings['alphabetical']; sort_order_state_modified(); return false;">
+    <p id="main_coverr"></p>
 <!--<div id="next_cover"></div>-->
 
 <script>
 var currently_playing = document.getElementById('currently_playing');
 var next_up = document.getElementById('next_up');
 var main_cover = document.getElementById('main_coverr');
-var settings = {'artist_album_width': 6};
+var settings = {'artist_album_width': 6,
+                'alphabetical': false};
 
 // default state: tracking
 document.getElementById('track').checked = true;
 tracker_state_modified();
+sort_order_state_modified();
 
 // navigation
             function locationHashChanged() {
@@ -96,6 +99,13 @@ function tracker_state_modified() {
 
     } else {
 
+    }
+}
+function sort_order_state_modified()  {
+    if (settings['alphabetical']) {
+        document.getElementById('sort_toggle').value = 'chronological';
+    } else {
+        document.getElementById('sort_toggle').value = 'alphabetical';
     }
 }
 </script>
