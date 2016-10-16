@@ -104,7 +104,7 @@ img_width = "300px"
 #         nav_html += '{}<br>'.format(track)
 
 
-def create_visual_artist_navigation(al_artist, chronological=True, width=6):
+def create_visual_artist_navigation(al_artist, chronological=True, width=6, display_text=True):
     nav_html = ''
     # pprint.pprint(aliased_artists)
     artist = aliased_artists[int(al_artist)]
@@ -143,13 +143,14 @@ def create_visual_artist_navigation(al_artist, chronological=True, width=6):
         #                                  album_data['alias'],
         #                                  album_data['title'])
         nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-{}">' \
-                    '   <img src="file:///{}" width="100%">{} ({})' \
-                    '   </div></a>\n'.format(al_artist,
+                    '   <img src="file:///{}" width="100%">'.format(al_artist,
                                              album_data['alias'],
                                              int(12/int(width)),
-                                             art.replace('\\', '/'),
-                                             album_data['title'],
-                                             album_data['year'])
+                                             art.replace('\\', '/'))
+        if display_text:
+            nav_html += album_data['title'] + '(' + str(album_data['year']) + ')'
+        nav_html += '</div></a>\n'
+
     if open_div:
         nav_html += '</div>\n'
     # print(nav_html)
@@ -198,7 +199,9 @@ def handle_navigation(payload):
                  'title': '- browser -'}]
     elif split[0] == 'artist' and len(split) == 2:
         return [{'command': 'display_new_nav_content',
-                'content': create_visual_artist_navigation(split[1], chronological=payload['settings']['chronological'], width=int(payload['settings']['artist_album_width']))},
+                'content': create_visual_artist_navigation(split[1], chronological=payload['settings']['chronological'],
+                                                           width=int(payload['settings']['artist_album_width']),
+                                                           display_text=payload['settings']['display_album_text'])},
                 {'command': 'display_title',
                  'title': aliased_artists[int(split[1])]}]
     elif split[0] == 'artist' and split[2] == 'album' and len(split) == 4:
