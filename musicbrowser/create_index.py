@@ -3,8 +3,6 @@ import json
 
 picard_dir = r'E:\picard'
 
-import os
-
 project_root = os.path.dirname(__file__)
 index_json = os.path.join(project_root, 'index.json')
 
