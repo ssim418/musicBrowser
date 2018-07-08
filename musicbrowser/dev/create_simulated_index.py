@@ -3,7 +3,7 @@ import os
 import pprint
 import random
 
-real_root = r'F:\what freeleech'
+real_root = r'G:\what freeleech'
 
 art = list()
 tracks = list()
@@ -21,7 +21,7 @@ for root, dirs, files in os.walk(real_root, topdown=False):
 print(art)
 print(len(art))
 
-with open(r'F:\index.json', 'r', encoding='utf-8') as f:
+with open(r'G:\index.json', 'r', encoding='utf-8') as f:
     index = json.load(f)
 
 for artist in index:

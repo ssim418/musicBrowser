@@ -17,6 +17,8 @@ import socket
 import random
 from logging.handlers import RotatingFileHandler
 
+import math
+
 SIMULATED_COVER_ART = False
 
 index = {}
@@ -72,12 +74,35 @@ def order_websocket_dict(json_str):
         ordered[item[0]] = item[1]
     return json.dumps(ordered)
 
+def is_new_artist(current_artist, previous_artist):
+    if previous_artist is None:
+        return True
+    current = current_artist if not current_artist.startswith('The') else current_artist[4:]
+    prev = previous_artist if not previous_artist.startswith('The') else previous_artist[4:]
+    return current[0] != prev[0]
+
 
 def create_root_navigation():
     nav_html = ''
-    for artist in sorted(index):
-        nav_html += '<a href="#artist/{}">{} ({})</a><br>'.format(get_artist_alias(artist), artist,
+    cols = 5
+    col_div = '<div style="width: {}%; float: left;">'.format(100.0/float(cols))
+    col_height = math.ceil(len(index)/cols)
+    current_col_height = 0
+    nav_html += col_div
+    previous_artist = None
+    for i, artist in enumerate(sorted(index, key=lambda x: x if not x.startswith('The') else x[4:])):
+        if current_col_height == col_height:
+            nav_html += '</div>' + col_div
+            current_col_height = 0
+        current_col_height += 1
+        if is_new_artist(artist, previous_artist):
+            nav_html += '<b>'
+        nav_html += '<a href="#artist/{}" style="">{} ({})</a><br>'.format(get_artist_alias(artist), artist,
                                                                                len(index[artist]))
+        if is_new_artist(artist, previous_artist):
+            nav_html += '</b>'
+        previous_artist = artist
+    nav_html += '</div>'
     return nav_html
 
 # def display_currently_playing_info():
@@ -123,15 +148,13 @@ def create_visual_artist_navigation(al_artist, chronological=True, width=6, disp
             raise AssertionError("TODO")
         if art is None:
             art = ""
-        if width not in [2, 3, 4, 6, 12]:
-            raise AssertionError('invalid width ' + str(width) + ', must be in {2, 3, 4, 6, 12}')
         if count % width == 0:
             if not open_div:
-                nav_html += '<div class="row">\n'
+                nav_html += '<div class="row" style="margin-left: 0px; margin-right: 0px;">\n'
                 open_div = True
             else:
                 nav_html += '</div>\n'
-                nav_html += '<div class="row">\n'
+                nav_html += '<div class="row" style="margin-left: 0px; margin-right: 0px;">\n'
                 open_div = True
         elif count % width == 0 and count != 0:
             nav_html += '</div>\n'
@@ -142,14 +165,14 @@ def create_visual_artist_navigation(al_artist, chronological=True, width=6, disp
         #             '   </div>\n'.format(al_artist,
         #                                  album_data['alias'],
         #                                  album_data['title'])
-        nav_html += '<a href="#artist/{}/album/{}"><div class="col-md-{}">' \
-                    '   <img src="file:///{}" width="100%">'.format(al_artist,
-                                             album_data['alias'],
-                                             int(12/int(width)),
-                                             art.replace('\\', '/'))
+        nav_html += '<div class="col" style="width: {}%; float: left;"><a href="#artist/{}/album/{}">' \
+                    '   <img src="file:///{}" width="100%">'.format((100.0 / float(width)),
+                                                                    al_artist,
+                                                                    album_data['alias'],
+                                                                    art.replace('\\', '/'))
         if display_text:
             nav_html += album_data['title'] + '(' + str(album_data['year']) + ')'
-        nav_html += '</div></a>\n'
+        nav_html += '</a></div>\n'
 
     if open_div:
         nav_html += '</div>\n'

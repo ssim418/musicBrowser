@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
         <!--<script src="" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous">-->
 </head>
-<body>
+<body style="">
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -22,10 +22,17 @@
 <input type="submit" value="Change Next Track" onclick="ws.send(JSON.stringify({'event': 'change_next_track'}));">
 <input type="submit" value="Home" onclick="window.location.hash = '';">
 <input type="checkbox" id="display_text" onclick="settings['display_album_text'] = !settings['display_album_text']; locationHashChanged();" checked> display album text
+    <input type="submit" value="1" onclick="settings['artist_album_width'] = 1; locationHashChanged();">
     <input type="submit" value="2" onclick="settings['artist_album_width'] = 2; locationHashChanged();">
     <input type="submit" value="3" onclick="settings['artist_album_width'] = 3; locationHashChanged();">
     <input type="submit" value="4" onclick="settings['artist_album_width'] = 4; locationHashChanged();">
+    <input type="submit" value="5" onclick="settings['artist_album_width'] = 5; locationHashChanged();">
     <input type="submit" value="6" onclick="settings['artist_album_width'] = 6; locationHashChanged();">
+    <input type="submit" value="7" onclick="settings['artist_album_width'] = 7; locationHashChanged();">
+    <input type="submit" value="8" onclick="settings['artist_album_width'] = 8; locationHashChanged();">
+    <input type="submit" value="9" onclick="settings['artist_album_width'] = 9; locationHashChanged();">
+    <input type="submit" value="10" onclick="settings['artist_album_width'] = 10; locationHashChanged();">
+    <input type="submit" value="11" onclick="settings['artist_album_width'] = 11; locationHashChanged();">
     <input type="submit" value="12" onclick="settings['artist_album_width'] = 12; locationHashChanged();">
     <input id="sort_toggle" type="submit" value="zzzz" onclick="settings['chronological'] = !settings['chronological']; sort_order_state_modified(); locationHashChanged();">
     <p id="main_coverr"></p>
