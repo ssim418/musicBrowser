@@ -90,6 +90,7 @@ def create_root_navigation():
     current_col_height = 0
     nav_html += col_div
     previous_artist = None
+    max_len = max(len(index[artist]) for artist in index)
     for i, artist in enumerate(sorted(index, key=lambda x: x if not x.startswith('The') else x[4:])):
         if current_col_height == col_height:
             nav_html += '</div>' + col_div
@@ -97,8 +98,10 @@ def create_root_navigation():
         current_col_height += 1
         if is_new_artist(artist, previous_artist):
             nav_html += '<b>'
-        nav_html += '<a href="#artist/{}" style="">{} ({})</a><br>'.format(get_artist_alias(artist), artist,
-                                                                               len(index[artist]))
+        nav_html += '<a href="#artist/{}" style="background-color: {};">{} ({})</a><br>'.format(get_artist_alias(artist),
+                                                                             'rgb({0},{0},{0})'.format(255 - int(50.0*(len(index[artist])/max_len))),
+                                                                             artist,
+                                                                             len(index[artist]))
         if is_new_artist(artist, previous_artist):
             nav_html += '</b>'
         previous_artist = artist
