@@ -1,7 +1,7 @@
 import os
 import json
 
-picard_dir = r'E:\picard'
+picard_dir = r'D:\picard'
 
 import os
 
